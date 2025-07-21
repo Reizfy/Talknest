@@ -15,7 +15,7 @@ class ForumDummySeeder extends Seeder
     public function run()
     {
         // Create users
-        $users = User::factory()->count(10)->create();
+        $users = User::all();
 
         // Create nests
         $nests = [

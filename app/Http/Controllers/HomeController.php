@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Nest;
 
 class HomeController extends Controller
 {
@@ -12,7 +13,8 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $assets = ['chart', 'animation'];
-        return view('user.home', compact('assets'));
+        $nests = Nest::select('id', 'name', 'title', 'banner')->get();
+        return view('home.home', compact('assets', 'nests'));
     }
 
     /*

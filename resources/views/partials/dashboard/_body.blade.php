@@ -5,10 +5,17 @@
 <main class="main-content">
     <div class="position-relative">
     @include('partials.dashboard._body_header')
-    @include('partials.dashboard.sub-header')
+
+    @if (Route::currentRouteName() !== 'home')
+        @include('partials.dashboard.sub-header')
+    @endif
     </div>
     
+    @if (Route::currentRouteName() !== 'home')
     <div class="conatiner-fluid content-inner mt-n5 py-0">
+    @else
+        <div class="conatiner-fluid content-inner">
+    @endif
     {{ $slot }}
     </div>
     

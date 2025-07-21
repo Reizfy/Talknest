@@ -6,6 +6,7 @@ use App\Http\Controllers\Security\RolePermission;
 use App\Http\Controllers\Security\RoleController;
 use App\Http\Controllers\Security\PermissionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\NestController;
 use Illuminate\Support\Facades\Artisan;
 // Packages
 use Illuminate\Support\Facades\Route;
@@ -28,16 +29,16 @@ Route::get('/storage', function () {
 });
 
 //UI Pages Routs
-Route::get('/', [HomeController::class, 'uisheet'])->name('uisheet');
 
 Route::group(['middleware' => 'auth'], function () {
+    Route::get('/', [HomeController::class, 'index'])->name('home');
+    Route::redirect('/home', '/');
+    Route::get('/documentation', [HomeController::class, 'uisheet'])->name('uisheet');
+
     // Permission Module
     Route::get('/role-permission',[RolePermission::class, 'index'])->name('role.permission.list');
     Route::resource('permission',PermissionController::class);
     Route::resource('role', RoleController::class);
-
-    // Dashboard Routes
-    Route::get('/dashboard', [HomeController::class, 'index'])->name('dashboard');
 
     // Users Module
     Route::resource('users', UserController::class);
@@ -85,6 +86,11 @@ Route::group(['prefix' => 'auth'], function() {
     Route::get('lockscreen', [HomeController::class, 'lockscreen'])->name('auth.lockscreen');
     Route::get('recoverpw', [HomeController::class, 'recoverpw'])->name('auth.recoverpw');
     Route::get('userprivacysetting', [HomeController::class, 'userprivacysetting'])->name('auth.userprivacysetting');
+});
+
+// Nests routes
+Route::group(['middleware' => 'auth'], function () {
+    Route::get('/nests/{name}', [App\Http\Controllers\NestController::class, 'index'])->name('nests.index');
 });
 
 //Error Page Route

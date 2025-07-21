@@ -15,43 +15,43 @@ class UserTableSeeder extends Seeder
      */
     public function run()
     {
-        $users = [
-            [
-                'first_name' => 'System',
-                'last_name' => 'Admin',
-                'username' => 'systemadmin',
-                'email' => 'admin@example.com',
+        $faker = \Faker\Factory::create();
+        // 1 admin
+        $admin = User::create([
+            'first_name' => $faker->firstName,
+            'last_name' => $faker->lastName,
+            'username' => $faker->unique()->userName,
+            'email' => $faker->unique()->safeEmail,
+            'password' => bcrypt('password'),
+            'phone_number' => $faker->phoneNumber,
+            'email_verified_at' => now(),
+            'user_type' => 'admin',
+            'status' => 'active',
+            'avatar' => 'avatars/' . $faker->word . '.png',
+            'banner' => 'banners/' . $faker->word . '.png',
+            'bio' => $faker->sentence,
+            'remember_token' => null,
+        ]);
+        $admin->assignRole('admin');
+
+        // 19 users
+        for ($i = 0; $i < 19; $i++) {
+            $user = User::create([
+                'first_name' => $faker->firstName,
+                'last_name' => $faker->lastName,
+                'username' => $faker->unique()->userName,
+                'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password'),
-                'phone_number' => '+12398190255',
-                'email_verified_at' => now(),
-                'user_type' => 'admin',
-                'status' => 'active',
-            ],
-            [
-                'first_name' => 'Demo',
-                'last_name' => 'Admin',
-                'username' => 'demoadmin',
-                'email' => 'demo@example.com',
-                'password' => bcrypt('password'),
-                'phone_number' => '+12398190255',
-                'email_verified_at' => now(),
-                'user_type' => 'demo_admin',
-            ],
-            [
-                'first_name' => 'John',
-                'last_name' => 'User',
-                'username' => 'user',
-                'email' => 'user@example.com',
-                'password' => bcrypt('password'),
-                'phone_number' => '+12398190255',
+                'phone_number' => $faker->phoneNumber,
                 'email_verified_at' => now(),
                 'user_type' => 'user',
-                'status' => 'inactive'
-            ]
-        ];
-        foreach ($users as $key => $value) {
-            $user = User::create($value);
-            $user->assignRole($value['user_type']);
+                'status' => $faker->randomElement(['active', 'inactive']),
+                'avatar' => 'avatars/' . $faker->word . '.png',
+                'banner' => 'banners/' . $faker->word . '.png',
+                'bio' => $faker->sentence,
+                'remember_token' => null,
+            ]);
+            $user->assignRole('user');
         }
     }
 }
