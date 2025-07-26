@@ -15,24 +15,27 @@
                                     <th>ID</th>
                                     <th>Name</th>
                                     <th>Owner</th>
-                                    <th>Members</th>
                                     <th>Created At</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {{-- Dummy data example --}}
-                                <tr>
-                                    <td>1</td>
-                                    <td>General</td>
-                                    <td>admin</td>
-                                    <td>42</td>
-                                    <td>2025-07-24</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-primary">Edit</button>
-                                        <button class="btn btn-sm btn-danger">Delete</button>
-                                    </td>
-                                </tr>
+                                @foreach($nest as $n)
+                                    <tr>
+                                        <td>{{ $n->id }}</td>
+                                        <td>{{ $n->name }}</td>
+                                        <td>{{ $n->owner->username }}</td>
+                                        <td>{{ $n->created_at->format('Y-m-d') }}</td>
+                                        <td style="display: flex; gap: 5px;">
+                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='{{ route('superadmin.nests.edit', ['id'=>$n->id]) }}'">Edit</button>
+                                            <form action="{{ route('superadmin.nests.destroy',['id'=>$n->id]) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </div>

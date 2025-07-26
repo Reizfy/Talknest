@@ -6,6 +6,10 @@ use App\Http\Controllers\Security\RolePermission;
 use App\Http\Controllers\Security\RoleController;
 use App\Http\Controllers\Security\PermissionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\SuperAdminUser;
+use App\Http\Controllers\SuperAdminNest;
+use App\Http\Controllers\SuperAdminPost;
+use App\Http\Controllers\SuperAdminComment;
 use App\Http\Controllers\NestController;
 use Illuminate\Support\Facades\Artisan;
 // Packages
@@ -160,10 +164,26 @@ Route::group(['prefix' => 'icons'], function() {
 
 // Superadmin (admin-only) routes
 Route::middleware(['auth', 'admin'])->prefix('superadmin')->group(function() {
-    Route::view('users', 'superadmin.users')->name('superadmin.users');
-    Route::view('nests', 'superadmin.nests')->name('superadmin.nests');
-    Route::view('posts', 'superadmin.posts')->name('superadmin.posts');
-    Route::view('comments', 'superadmin.comments')->name('superadmin.comments');
+    Route::get('users', [SuperAdminUser::class, "index"])->name('superadmin.users');
+    Route::get('users/{id}/edit', [SuperAdminUser::class, "edit"])->name('superadmin.users.edit');
+    Route::put('users/{id}', [SuperAdminUser::class, "update"])->name('superadmin.users.update');
+    Route::delete('users/{id}', [SuperAdminUser::class, "destroy"])->name('superadmin.users.destroy');
+
+    Route::get('nests', [SuperAdminNest::class, "index"])->name('superadmin.nests');
+    Route::get('nests/{id}/edit', [SuperAdminNest::class, "edit"])->name('superadmin.nests.edit');
+    Route::put('nests/{id}', [SuperAdminNest::class, "update"])->name('superadmin.nests.update');
+    Route::delete('nests/{id}', [SuperAdminNest::class, "destroy"])->name('superadmin.nests.destroy');
+
+    Route::get('posts', [SuperAdminPost::class, "index"])->name('superadmin.posts');
+    Route::get('posts/{id}/edit', [SuperAdminPost::class, "edit"])->name('superadmin.posts.edit');
+    Route::put('posts/{id}', [SuperAdminPost::class, "update"])->name('superadmin.posts.update');
+    Route::delete('posts/{id}', [SuperAdminPost::class, "destroy"])->name('superadmin.posts.destroy');
+
+    Route::get('comments', [SuperAdminComment::class, "index"])->name('superadmin.comments');
+    Route::get('comments/{id}/edit', [SuperAdminComment::class, "edit"])->name('superadmin.comments.edit');
+    Route::put('comments/{id}', [SuperAdminComment::class, "update"])->name('superadmin.comments.update');
+    Route::delete('comments/{id}', [SuperAdminComment::class, "destroy"])->name('superadmin.comments.destroy');
+    
     Route::view('logs', 'superadmin.logs')->name('superadmin.logs');
 });
 

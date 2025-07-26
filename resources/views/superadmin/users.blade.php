@@ -21,17 +21,23 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>admin</td>
-                                    <td>admin@email.com</td>
-                                    <td>Superadmin</td>
-                                    <td>Active</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-primary">Edit</button>
-                                        <button class="btn btn-sm btn-danger">Delete</button>
-                                    </td>
-                                </tr>
+                                @foreach($users as $user)
+                                    <tr>
+                                        <td>{{ $user->id }}</td>
+                                        <td>{{ $user->username }}</td>
+                                        <td>{{ $user->email }}</td>
+                                        <td>{{ $user->user_type }}</td>
+                                        <td>{{ $user->status }}</td>
+                                        <td style="display: flex; gap: 5px;">
+                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='{{ route('superadmin.users.edit', ['id'=>$user->id]) }}'">Edit</button>
+                                            <form action="{{ route('superadmin.users.destroy',['id'=>$user->id]) }}" method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                @endforeach
                             </tbody>
                         </table>
                     </div>
