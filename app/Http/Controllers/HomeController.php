@@ -13,7 +13,7 @@ class HomeController extends Controller
     public function index(Request $request)
     {
         $assets = ['chart', 'animation'];
-        $nests = Nest::select('id', 'name', 'title', 'banner')->get();
+        $nests = Nest::select('id', 'name', 'banner')->get();
         return view('home.home', compact('assets', 'nests'));
     }
 

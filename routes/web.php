@@ -30,9 +30,10 @@ Route::get('/storage', function () {
 
 //UI Pages Routs
 
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::redirect('/home', '/');
+
 Route::group(['middleware' => 'auth'], function () {
-    Route::get('/', [HomeController::class, 'index'])->name('home');
-    Route::redirect('/home', '/');
     Route::get('/documentation', [HomeController::class, 'uisheet'])->name('uisheet');
 
     // Permission Module
@@ -88,10 +89,44 @@ Route::group(['prefix' => 'auth'], function() {
     Route::get('userprivacysetting', [HomeController::class, 'userprivacysetting'])->name('auth.userprivacysetting');
 });
 
+// Nests interactive routes: redirect guests to register
+Route::get('/nests/create', function() {
+    return auth()->check() ? app(App\Http\Controllers\NestController::class)->create() : redirect()->route('register');
+})->name('nests.create');
+
 // Nests routes
-Route::group(['middleware' => 'auth'], function () {
-    Route::get('/nests/{name}', [App\Http\Controllers\NestController::class, 'index'])->name('nests.index');
-});
+Route::get('/nests/{name}', [App\Http\Controllers\NestController::class, 'index'])->name('nests.index');
+
+Route::get('/nests/{name}/posts', [App\Http\Controllers\NestController::class, 'posts'])->name('nests.posts');
+
+Route::post('/nests/{nest}/create-posts', [App\Http\Controllers\NestController::class, 'storePost'])->name('posts.store');
+
+Route::get('/nests/{name}/comments/{post_id}', [App\Http\Controllers\NestController::class, 'comments'])->name('nests.comments');
+
+Route::post('/posts/{id}/vote', function($id) {
+    return auth()->check() ? app(App\Http\Controllers\NestController::class)->vote(request(), $id) : redirect()->route('register');
+})->name('posts.vote');
+
+// Comment and reply route
+Route::post('/posts/{post}/comment', [App\Http\Controllers\CommentController::class, 'store'])->name('posts.comment');
+
+Route::post('/nests-store', function() {
+    return auth()->check() ? app(App\Http\Controllers\NestController::class)->store(request()) : redirect()->route('register');
+})->name('nests.store');
+
+//Explicit update route for nests
+Route::put('nests/{nest}', [App\Http\Controllers\NestController::class, 'update'])->name('nests.update');
+
+// Edit nest route
+Route::get('nests/{nest}/edit', [App\Http\Controllers\NestController::class, 'edit'])->name('nests.edit');
+
+
+// Promote member to moderator
+Route::post('/nests/{nest}/{user}/promote', [App\Http\Controllers\NestController::class, 'promote'])->name('nests.promote');
+// Kick member from nest
+Route::delete('/nests/{nest}/{user}/kick', [App\Http\Controllers\NestController::class, 'kick'])->name('nests.kick');
+Route::delete('/nests/{name}', [App\Http\Controllers\NestController::class, 'destroy'])->name('nests.destroy');
+
 
 //Error Page Route
 Route::group(['prefix' => 'errors'], function() {
@@ -122,6 +157,16 @@ Route::group(['prefix' => 'icons'], function() {
     Route::get('dualtone', [HomeController::class, 'dualtone'])->name('icons.dualtone');
     Route::get('colored', [HomeController::class, 'colored'])->name('icons.colored');
 });
+
+// Superadmin (admin-only) routes
+Route::middleware(['auth', 'admin'])->prefix('superadmin')->group(function() {
+    Route::view('users', 'superadmin.users')->name('superadmin.users');
+    Route::view('nests', 'superadmin.nests')->name('superadmin.nests');
+    Route::view('posts', 'superadmin.posts')->name('superadmin.posts');
+    Route::view('comments', 'superadmin.comments')->name('superadmin.comments');
+    Route::view('logs', 'superadmin.logs')->name('superadmin.logs');
+});
+
 //Extra Page Routs
 Route::get('privacy-policy', [HomeController::class, 'privacypolicy'])->name('pages.privacy-policy');
 Route::get('terms-of-use', [HomeController::class, 'termsofuse'])->name('pages.term-of-use');

@@ -22,13 +22,12 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
      */
     protected $fillable = [
         'username',
-        'first_name',
-        'last_name',
-        'phone_number',
+        'display_name',
         'status',
         'banned',
         'email',
         'password',
+        'gender',
     ];
 
     /**
@@ -50,14 +49,16 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         'email_verified_at' => 'datetime',
     ];
 
-    protected $appends = ['full_name'];
+    // protected $appends = ['full_name'];
 
-    public function getFullNameAttribute()
+    // public function getFullNameAttribute()
+    // {
+    //     return $this->first_name . ' ' . $this->last_name;
+    // }
+
+
+    public function nests()
     {
-        return $this->first_name . ' ' . $this->last_name;
-    }
-
-    public function userProfile() {
-        return $this->hasOne(UserProfile::class, 'user_id', 'id');
+        return $this->belongsToMany(Nest::class)->withPivot('role')->withTimestamps();
     }
 }

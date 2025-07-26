@@ -18,14 +18,13 @@ class UserTableSeeder extends Seeder
         $faker = \Faker\Factory::create();
         // 1 admin
         $admin = User::create([
-            'first_name' => $faker->firstName,
-            'last_name' => $faker->lastName,
-            'username' => $faker->unique()->userName,
-            'email' => $faker->unique()->safeEmail,
+            'username' => 'NestsAdmin',
+            'display_name' => null,
+            'email' => 'admin@mail.com',
             'password' => bcrypt('password'),
-            'phone_number' => $faker->phoneNumber,
             'email_verified_at' => now(),
             'user_type' => 'admin',
+            'gender' => $faker->randomElement(['male', 'female']),
             'status' => 'active',
             'avatar' => 'avatars/' . $faker->word . '.png',
             'banner' => 'banners/' . $faker->word . '.png',
@@ -36,15 +35,16 @@ class UserTableSeeder extends Seeder
 
         // 19 users
         for ($i = 0; $i < 19; $i++) {
+            $rawUsername = preg_replace('/[^a-zA-Z0-9]/', '', $faker->unique()->userName);
+            $username = strtolower($rawUsername . rand(1000,9999));
             $user = User::create([
-                'first_name' => $faker->firstName,
-                'last_name' => $faker->lastName,
-                'username' => $faker->unique()->userName,
+                'username' => $username,
+                'display_name' => $faker->name,
                 'email' => $faker->unique()->safeEmail,
                 'password' => bcrypt('password'),
-                'phone_number' => $faker->phoneNumber,
                 'email_verified_at' => now(),
                 'user_type' => 'user',
+                'gender' => $faker->randomElement(['male', 'female']),
                 'status' => $faker->randomElement(['active', 'inactive']),
                 'avatar' => 'avatars/' . $faker->word . '.png',
                 'banner' => 'banners/' . $faker->word . '.png',

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Nest extends Model
 {
     protected $fillable = [
-        'name', 'title', 'description', 'banner', 'owner_id'
+        'name', 'description', 'banner', 'profile_image', 'owner_id'
     ];
 
     public function users()
@@ -23,5 +23,10 @@ class Nest extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function moderators()
+    {
+        return $this->users()->wherePivot('role', 'moderator');
     }
 }

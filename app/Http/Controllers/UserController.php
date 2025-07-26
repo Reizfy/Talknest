@@ -55,8 +55,7 @@ class UserController extends Controller
 
         $user->assignRole('user');
 
-        // Save user Profile data...
-        $user->userProfile()->create($request->userProfile);
+        // No userProfile relationship, only User fields are used now.
 
         return redirect()->route('users.index')->withSuccess(__('message.msg_added',['name' => __('users.store')]));
     }
@@ -69,10 +68,8 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $data = User::with('userProfile','roles')->findOrFail($id);
-
+        $data = User::with('roles')->findOrFail($id);
         $profileImage = getSingleMedia($data, 'profile_image');
-
         return view('users.profile', compact('data', 'profileImage'));
     }
 
@@ -84,14 +81,10 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        $data = User::with('userProfile','roles')->findOrFail($id);
-
+        $data = User::with('roles')->findOrFail($id);
         $data['user_type'] = $data->roles->pluck('id')[0] ?? null;
-
         $roles = Role::where('status',1)->get()->pluck('title', 'id');
-
         $profileImage = getSingleMedia($data, 'profile_image');
-
         return view('users.form', compact('data','id', 'roles', 'profileImage'));
     }
 
@@ -105,7 +98,7 @@ class UserController extends Controller
     public function update(UserRequest $request, $id)
     {
         // dd($request->all());
-        $user = User::with('userProfile')->findOrFail($id);
+        $user = User::findOrFail($id);
 
         $role = Role::find($request->user_role);
         if(env('IS_DEMO')) {
@@ -126,8 +119,7 @@ class UserController extends Controller
             $user->addMediaFromRequest('profile_image')->toMediaCollection('profile_image');
         }
 
-        // user profile data....
-        $user->userProfile->fill($request->userProfile)->update();
+        // No userProfile relationship, only User fields are used now.
 
         if(auth()->check()){
             return redirect()->route('users.index')->withSuccess(__('message.msg_updated',['name' => __('message.user')]));

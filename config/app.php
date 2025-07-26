@@ -178,6 +178,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\SidebarComposerServiceProvider::class,
+        App\Providers\SubHeaderComposerServiceProvider::class,
 
     ],
 

@@ -16,7 +16,17 @@ class SidebarComposerServiceProvider extends ServiceProvider
         View::composer(
             'partials.dashboard.vertical-nav',
             function ($view) {
-                $view->with('nests', Nest::select('id', 'name', 'title', 'banner')->get());
+                $user = auth()->user();
+                $canCreate = $user ? true : false;
+                $nests = collect();
+                if ($user) {
+                    $nests = $user->nests()->select('nests.id', 'nests.name', 'nests.profile_image')->get();
+                }
+                $view->with([
+                    'nests' => $nests,
+                    'canCreate' => $canCreate,
+                    'user' => $user
+                ]);
             }
         );
     }

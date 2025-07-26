@@ -22,34 +22,28 @@ class UserFactory extends Factory
      */
     public function definition()
     {
-        $fname = $this->faker->firstName;
-        $lname = $this->faker->lastName;
-        $fullname = Str::lower($fname).Str::lower($lname);
+        $rawUsername = preg_replace('/[^a-zA-Z0-9]/', '', $this->faker->unique()->userName);
+        $username = strtolower($rawUsername . rand(1000,9999));
         $status = $this->faker->numberBetween(0,2);
         switch ($status) {
             case 1:
                 $status = 'active';
                 break;
-
             case 2:
                 $status = 'inactive';
                 break;
-
-                default:
+            default:
                 $status = 'pending';
                 break;
         }
         return [
-            'username' => $fullname,
-            'first_name' => $fname,
-            'last_name' => $lname,
-            'phone_number' => $this->faker->phoneNumber,
+            'username' => $username,
             'email' => $this->faker->unique()->safeEmail,
             'email_verified_at' => now(),
             'password' => bcrypt('password'),
-            'phone_number' => $this->faker->phoneNumber,
             'user_type' => 'user',
-            'status' => $status
+            'status' => $status,
+            'gender' => $this->faker->randomElement(['male', 'female']),
         ];
     }
 }

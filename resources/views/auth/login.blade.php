@@ -50,23 +50,6 @@
                            <div class="d-flex justify-content-center">
                               <button type="submit" class="btn btn-primary">{{ __('Sign In') }}</button>
                            </div>
-                           <p class="text-center my-3">or sign in with other accounts?</p>
-                           <div class="d-flex justify-content-center">
-                              <ul class="list-group list-group-horizontal list-group-flush">
-                                 <li class="list-group-item border-0 pb-0">
-                                    <a href="#"><img src="{{asset('images/brands/fb.svg')}}" alt="fb"></a>
-                                 </li>
-                                 <li class="list-group-item border-0 pb-0">
-                                    <a href="#"><img src="{{asset('images/brands/gm.svg')}}" alt="gm"></a>
-                                 </li>
-                                 <li class="list-group-item border-0 pb-0">
-                                    <a href="#"><img src="{{asset('images/brands/im.svg')}}" alt="im"></a>
-                                 </li>
-                                 <li class="list-group-item border-0 pb-0">
-                                    <a href="#"><img src="{{asset('images/brands/li.svg')}}" alt="li"></a>
-                                 </li>
-                              </ul>
-                           </div>
                            <p class="mt-3 text-center">
                               Don’t have an account? <a href="{{route('auth.signup')}}" class="text-underline">Click here to sign up.</a>
                            </p>

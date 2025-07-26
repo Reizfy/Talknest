@@ -16,9 +16,9 @@ class CreateNestsTable extends Migration
         Schema::create('nests', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->string('title');
             $table->text('description')->nullable();
             $table->string('banner')->nullable();
+            $table->string('profile_image')->nullable();
             $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });

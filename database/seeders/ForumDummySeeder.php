@@ -17,57 +17,57 @@ class ForumDummySeeder extends Seeder
         // Create users
         $users = User::all();
 
-        // Create nests
-        $nests = [
-            ['name' => 'laravel', 'title' => 'Laravel Dev Talk', 'description' => 'Forum untuk diskusi Laravel', 'owner_id' => $users[0]->id],
-            ['name' => 'webdev', 'title' => 'Web Development', 'description' => 'Semua tentang web dev', 'owner_id' => $users[1]->id],
-        ];
-        foreach ($nests as $nestData) {
-            $nest = Nest::create($nestData);
-            // Add 10 members per nest
-            foreach ($users as $i => $user) {
-                if ($i < 10) {
-                    NestUser::create([
-                        'nest_id' => $nest->id,
-                        'user_id' => $user->id,
-                        'role' => $i == 0 ? 'moderator' : 'member',
-                    ]);
-                }
-            }
-            // Create 20 posts per nest
-            for ($j = 0; $j < 20; $j++) {
-                $post = Post::create([
-                    'user_id' => $users[$j % 10]->id,
+        $nest = Nest::create([
+            'name' => 'limbuscompany',
+            'description' => 'Face the Sin, Save the EGO. Unofficial fan subreddit for the mobile/Steam game Limbus Company. As the Executive Manager, lead your group of twelve Sinners, venture into the buried facilities of Lobotomy Corporation, and lay claim on the Golden Boughs.',
+            'owner_id' => $users[0]->id,
+            'profile_image' => 'limbuscompany.png',
+            'banner' => 'limbuscompany.png',
+        ]);
+
+        foreach ($users as $i => $user) {
+            if ($i < 10) {
+                NestUser::create([
                     'nest_id' => $nest->id,
-                    'title' => "Post $j in {$nest->name}",
-                    'content' => "Ini adalah konten post $j di {$nest->name}",
+                    'user_id' => $user->id,
+                    'role' => $i == 0 ? 'moderator' : 'member',
                 ]);
-                // Add comments
-                for ($k = 0; $k < 2; $k++) {
-                    $comment = Comment::create([
-                        'post_id' => $post->id,
-                        'user_id' => $users[$k]->id,
-                        'content' => "Comment $k on post $j in {$nest->name}",
-                    ]);
-                    // Add votes to comment
-                    foreach ($users as $voter) {
-                        Vote::create([
-                            'user_id' => $voter->id,
-                            'votable_id' => $comment->id,
-                            'votable_type' => Comment::class,
-                            'value' => rand(-1,1),
-                        ]);
-                    }
-                }
-                // Add votes to post
+            }
+        }
+
+        // Create 20 posts for the nest
+        for ($j = 0; $j < 20; $j++) {
+            $post = Post::create([
+                'user_id' => $users[$j % 10]->id,
+                'nest_id' => $nest->id,
+                'title' => "Post $j in limbus_company",
+                'content' => "Ini adalah konten post $j di limbus_company",
+            ]);
+            // Add comments
+            for ($k = 0; $k < 2; $k++) {
+                $comment = Comment::create([
+                    'post_id' => $post->id,
+                    'user_id' => $users[$k]->id,
+                    'content' => "Comment $k on post $j in limbus_company",
+                ]);
+                // Add votes to comment
                 foreach ($users as $voter) {
                     Vote::create([
                         'user_id' => $voter->id,
-                        'votable_id' => $post->id,
-                        'votable_type' => Post::class,
+                        'votable_id' => $comment->id,
+                        'votable_type' => Comment::class,
                         'value' => rand(-1,1),
                     ]);
                 }
+            }
+            // Add votes to post
+            foreach ($users as $voter) {
+                Vote::create([
+                    'user_id' => $voter->id,
+                    'votable_id' => $post->id,
+                    'votable_type' => Post::class,
+                    'value' => rand(-1,1),
+                ]);
             }
         }
     }
