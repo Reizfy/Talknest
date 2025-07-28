@@ -68,9 +68,9 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $data = User::with('roles')->findOrFail($id);
-        $profileImage = getSingleMedia($data, 'profile_image');
-        return view('users.profile', compact('data', 'profileImage'));
+        $user = User::with('roles')->findOrFail($id);
+        $profileImage = getSingleMedia($user, 'profile_image');
+        return view('users.profile', compact('user', 'profileImage'));
     }
 
     /**
@@ -81,11 +81,8 @@ class UserController extends Controller
      */
     public function edit($id)
     {
-        $data = User::with('roles')->findOrFail($id);
-        $data['user_type'] = $data->roles->pluck('id')[0] ?? null;
-        $roles = Role::where('status',1)->get()->pluck('title', 'id');
-        $profileImage = getSingleMedia($data, 'profile_image');
-        return view('users.form', compact('data','id', 'roles', 'profileImage'));
+        $user = User::findOrFail($id);
+        return view('users.edit', compact('user'));
     }
 
     /**
@@ -128,12 +125,6 @@ class UserController extends Controller
 
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
         $user = User::findOrFail($id);
@@ -152,5 +143,92 @@ class UserController extends Controller
 
         return redirect()->back()->with($status,$message);
 
+    }
+
+    public function userFeedPosts(Request $request)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['data' => []]);
+        }
+        $limit = $request->input('limit', 10);
+        $page = $request->input('page', 1);
+        $query = \App\Models\Post::with(['nest', 'votes', 'comments'])
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc');
+        $posts = $query->skip(($page-1)*$limit)->take($limit)->get();
+        $result = $posts->map(function($post) use ($user) {
+            $currentUserVote = $post->votes->where('user_id', $user->id)->first()?->value ?? 0;
+            return [
+                'id' => $post->id,
+                'title' => $post->title,
+                'content' => $post->content,
+                'media' => $post->media,
+                'created_at' => $post->created_at,
+                'username' => $user->username,
+                'user_image' => $user->avatar,
+                'nest_image' => $post->nest ? $post->nest->profile_image : null,
+                'nest_name' => $post->nest ? $post->nest->name : null,
+                'votes_count' => $post->votes->sum('value'),
+                'comments_count' => $post->comments->count(),
+                'current_user_vote' => $currentUserVote,
+            ];
+        });
+        return response()->json(['data' => $result]);
+    }
+
+    /**
+     * Update the authenticated user's profile.
+     */
+    public function updateProfile(Request $request)
+    {
+        $user = auth()->user();
+        $data = $request->only(['username', 'full_name', 'email', 'gender']);
+        // Username uniqueness check
+        if (User::where('username', $data['username'])->where('id', '!=', $user->id)->exists()) {
+            return redirect()->back()->withErrors(['username' => 'Username is already taken.'])->withInput();
+        }
+        // Email uniqueness check
+        if (User::where('email', $data['email'])->where('id', '!=', $user->id)->exists()) {
+            return redirect()->back()->withErrors(['email' => 'Email is already taken.'])->withInput();
+        }
+
+        // Password update logic
+        if ($request->filled('current_password') || $request->filled('new_password') || $request->filled('new_password_confirmation')) {
+            if (! $request->filled('current_password')) {
+                return redirect()->back()->withErrors(['current_password' => 'Current password is required to change password.'])->withInput();
+            }
+            if (! \Hash::check($request->current_password, $user->password)) {
+                return redirect()->back()->withErrors(['current_password' => 'Current password is incorrect.'])->withInput();
+            }
+            if (! $request->filled('new_password')) {
+                return redirect()->back()->withErrors(['new_password' => 'New password is required.'])->withInput();
+            }
+            if ($request->new_password !== $request->new_password_confirmation) {
+                return redirect()->back()->withErrors(['new_password_confirmation' => 'New password confirmation does not match.'])->withInput();
+            }
+            if (strlen($request->new_password) < 8) {
+                return redirect()->back()->withErrors(['new_password' => 'New password must be at least 8 characters.'])->withInput();
+            }
+            $data['password'] = bcrypt($request->new_password);
+        }
+
+        $user->fill($data);
+        // Avatar upload
+        if ($request->hasFile('avatar')) {
+            $avatar = $request->file('avatar');
+            $avatarName = uniqid('avatar_') . '.' . $avatar->getClientOriginalExtension();
+            $avatar->storeAs('public/profiles/images', $avatarName);
+            $user->avatar = $avatarName;
+        }
+        // Banner upload
+        if ($request->hasFile('banner')) {
+            $banner = $request->file('banner');
+            $bannerName = uniqid('banner_') . '.' . $banner->getClientOriginalExtension();
+            $banner->storeAs('public/profiles/banners', $bannerName);
+            $user->banner = $bannerName;
+        }
+        $user->save();
+        return redirect()->route('profile.edit')->with('success', 'Profile updated successfully.');
     }
 }

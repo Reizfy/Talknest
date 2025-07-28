@@ -13,8 +13,13 @@ class NestController extends Controller
 
         $user = auth()->user();
         $isJoined = 0;
+        $isBanned = false;
         if ($user) {
-            $isJoined = $nest->users->contains($user->id) ? 1 : 0;
+            $pivot = $nest->users()->where('user_id', $user->id)->first();
+            if ($pivot) {
+                $isJoined = 1;
+                $isBanned = $pivot->pivot->banned ?? false;
+            }
         }
 
         $ownerUsername = $nest->owner ? ($nest->owner->username ?? $nest->owner->name ?? $nest->owner->email) : null;
@@ -32,6 +37,7 @@ class NestController extends Controller
             'nest' => $nest,
             'memberCount' => $nest->users()->count(),
             'isJoined' => $isJoined,
+            'isBanned' => $isBanned,
             'ownerUsername' => $ownerUsername,
             'moderatorUsernames' => $moderatorUsernames,
             'canJoin' => $user ? true : false,
@@ -304,13 +310,16 @@ class NestController extends Controller
         if (!$currentUser || $nest->owner_id !== $currentUser->id) {
             return redirect()->back()->with('error', 'Only the owner can promote members.');
         }
-        if ($nest->moderators->contains($user)) {
+        // Check if user is already a moderator
+        $pivot = $nest->users()->where('user_id', $user)->first();
+        if ($pivot && $pivot->pivot->role === 'moderator') {
             return redirect()->back()->with('error', 'User is already a moderator.');
         }
         if ($user == $nest->owner_id) {
             return redirect()->back()->with('error', 'Owner cannot be promoted.');
         }
-        $nest->moderators()->attach($user);
+        // Promote by updating pivot role
+        $nest->users()->updateExistingPivot($user, ['role' => 'moderator', 'banned' => false]);
         return redirect()->back()->with('success', 'Member promoted to moderator.');
     }
 
@@ -331,9 +340,63 @@ class NestController extends Controller
         if ($isModerator && $nest->moderators->contains($user)) {
             return redirect()->back()->with('error', 'Moderators cannot kick other moderators.');
         }
-        $nest->users()->detach($user);
+        // Ban the user from the nest
+        $nest->users()->updateExistingPivot($user, ['banned' => true, 'role' => 'member']);
         $nest->moderators()->detach($user);
-        return redirect()->back()->with('success', 'Member has been kicked.');
+        return redirect()->back()->with('success', 'Member has been banned from this nest.');
     }
 
+        // Join or leave a nest
+    public function joinNest(Request $request, $nest)
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+        $nestModel = \App\Models\Nest::where('name', $nest)->firstOrFail();
+        $isJoined = $nestModel->users()->where('user_id', $user->id)->exists();
+        // If already joined, treat as leave
+        if ($isJoined) {
+            // If owner leaves, transfer ownership
+            if ($nestModel->owner_id === $user->id) {
+                // Try to transfer to a moderator
+                $newOwner = $nestModel->moderators()->where('user_id', '!=', $user->id)->inRandomOrder()->first();
+                if (!$newOwner) {
+                    // If no moderator, transfer to a random member (not banned, not owner)
+                    $newOwner = $nestModel->users()->where('user_id', '!=', $user->id)->wherePivot('banned', false)->inRandomOrder()->first();
+                }
+                if ($newOwner) {
+                    $nestModel->owner_id = $newOwner->id;
+                    $nestModel->save();
+                } else {
+                    // If no one left, delete the nest
+                    $nestModel->delete();
+                    return response()->json(['message' => 'Nest deleted as no members left.'], 200);
+                }
+            }
+            $nestModel->users()->detach($user->id);
+            return response()->json(['message' => 'Left the nest.'], 200);
+        } else {
+            // Join the nest
+            $nestModel->users()->attach($user->id, ['role' => 'member', 'banned' => false]);
+            return response()->json(['message' => 'Joined the nest.'], 200);
+        }
+    }
+
+    /**
+     * Remove the specified post from the nest (moderation).
+     */
+    public function destroyPost(Request $request, $nest, $post)
+    {
+        $nestModel = \App\Models\Nest::where('name', $nest)->firstOrFail();
+        $user = $request->user();
+        // Only owner or moderator can delete
+        $isModerator = $nestModel->moderators->contains($user->id);
+        if ($user->id !== $nestModel->owner_id && !$isModerator) {
+            abort(403, 'Unauthorized');
+        }
+        $postModel = $nestModel->posts()->where('id', $post)->firstOrFail();
+        $postModel->delete();
+        return redirect()->back()->with('success', 'Post deleted successfully.');
+    }
 }

@@ -146,6 +146,37 @@ function fetchPosts(initial = false) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    // On page load, check for #post-{id} in hash and trigger post detail modal with retry logic
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#post-')) {
+        const postId = hash.replace('#post-', '');
+        function tryOpenModal() {
+            if (postId && !isNaN(postId) && typeof window.renderPostDetail === "function") {
+
+                fetch(`/nests/${window.nestName}/comments/${postId}`)
+                    .then((res) => res.json())
+                    .then((data) => {
+                        const oldModal = document.getElementById("postDetailModal");
+                        if (oldModal) oldModal.remove();
+                        document.body.insertAdjacentHTML("beforeend", window.renderPostDetail ? window.renderPostDetail(data.post, data.comments) : renderPostDetail(data.post, data.comments));
+                        const modalEl = document.getElementById("postDetailModal");
+                        const modal = new bootstrap.Modal(modalEl);
+                        modal.show();
+                    });
+            } else {
+                // Try again in 100ms if not loaded yet, up to 10 times
+                if (window._nestModalTries === undefined) window._nestModalTries = 0;
+                if (window._nestModalTries < 10) {
+                    window._nestModalTries++;
+                    setTimeout(tryOpenModal, 100);
+                } else {
+                    console.warn("renderPostDetail not available after waiting.");
+                }
+            }
+        }
+        tryOpenModal();
+    }
+
     fetchPosts(true);
     const sortDropdown = document.getElementById("sort-dropdown");
     if (sortDropdown) {

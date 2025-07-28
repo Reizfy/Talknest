@@ -29,7 +29,6 @@
                                         <td>{{ $c->content }}</td>
                                         <td>{{ $c->created_at->format('Y-m-d') }}</td>
                                         <td style="display: flex; gap: 5px;">
-                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='{{ route('superadmin.comments.edit', ['id'=>$c->id]) }}'">Edit</button>
                                             <form action="{{ route('superadmin.comments.destroy',['id'=>$c->id]) }}" method="POST">
                                                 @csrf
                                                 @method('DELETE')

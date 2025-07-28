@@ -12,7 +12,7 @@ function commentHtml(comment) {
     return `
         <li class="mb-2 ${liIndentClass}" data-comment-id="${comment.id}">
             <div class="d-flex">
-                <img src="${userImgSrc}" alt="userimg" class="avatar-50 p-1 pt-2 bg-soft-primary rounded-pill img-fluid">
+                <img src="${userImgSrc}" alt="userimg" class="avatar-50 bg-soft-primary rounded-pill img-fluid">
                 <div class="ms-3">
                     <h6 class="mb-1">${comment.username ?? "Unknown"}</h6>
                     <p class="mb-1">${comment.content ?? ""}</p>
@@ -41,7 +41,7 @@ function renderPostDetail(post, comments) {
         <div class="modal-content">
           <div class="modal-header">
             <div class="d-flex align-items-center">
-              <img class="rounded-pill img-fluid avatar-60 bg-soft-danger p-1 ps-2" src="${userImgSrc}" alt="">
+              <img class="rounded-pill img-fluid avatar-60 bg-soft-danger" src="${userImgSrc}" alt="">
               <h5 class="ms-3 mb-0">u/${post.username ?? "Unknown"}</h5>
             </div>
             <button type="button" class="btn-close mx-2" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -223,7 +223,9 @@ document
                     })
                     .then(async res => {
                         if (res.status === 401) {
-                            window.location.href = '/login';
+                            // Remove hash before redirecting to login
+                            const urlWithoutHash = window.location.href.split('#')[0];
+                            window.location.href = '/login?redirect=' + encodeURIComponent(urlWithoutHash);
                             return;
                         }
                         if (!res.ok) {

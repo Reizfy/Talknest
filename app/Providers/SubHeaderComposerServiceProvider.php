@@ -17,12 +17,13 @@ class SubHeaderComposerServiceProvider extends ServiceProvider
             if ($route && $route->parameter('name')) {
                 $nest = Nest::where('name', $route->parameter('name'))->first();
             }
-            $view->with('nest', $nest);
+            $user = auth()->user();
+            $view->with('nest', $nest)->with('user', $user);
         });
     }
 
     public function register()
     {
-        //
+        //a
     }
 }

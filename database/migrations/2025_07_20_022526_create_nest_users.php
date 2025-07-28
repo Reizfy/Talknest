@@ -18,6 +18,7 @@ class CreateNestUsers extends Migration
             $table->foreignId('nest_id')->constrained('nests')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->enum('role', ['member', 'moderator'])->default('member');
+            $table->boolean('banned')->default(false);
             $table->timestamps();
         });
     }

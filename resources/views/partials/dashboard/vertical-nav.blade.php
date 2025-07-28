@@ -70,7 +70,6 @@
     <li class="nav-item"><a class="nav-link" href="{{ route('superadmin.nests') }}"><span class="item-name">Nests</span></a></li>
     <li class="nav-item"><a class="nav-link" href="{{ route('superadmin.posts') }}"><span class="item-name">Posts</span></a></li>
     <li class="nav-item"><a class="nav-link" href="{{ route('superadmin.comments') }}"><span class="item-name">Comments</span></a></li>
-    <li class="nav-item"><a class="nav-link" href="{{ route('superadmin.logs') }}"><span class="item-name">Logs</span></a></li>
     <li><hr class="hr-horizontal"></li>
     @endif
 </ul>

@@ -5,7 +5,7 @@
             if (isset($nest) && $nest) {
                 $bannerSrc = $nest->banner ? asset('storage/nests/banners/' . $nest->banner) : asset('images/dashboard/top-header.png');
             } elseif (isset($user) && $user) {
-                $bannerSrc = $user->banner ? asset('storage/users/banners/' . $user->banner) : asset('images/dashboard/top-header.png');
+                $bannerSrc = $user->banner ? asset('storage/profiles/banners/' . $user->banner) : asset('images/dashboard/top-header.png');
             } else {
                 $bannerSrc = asset('images/dashboard/top-header.png');
             }

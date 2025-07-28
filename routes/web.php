@@ -37,6 +37,17 @@ Route::get('/storage', function () {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::redirect('/home', '/');
 
+// Search routes
+Route::get('/search', [App\Http\Controllers\SearchController::class, 'index'])->name('search.index');
+Route::get('/search/posts', [App\Http\Controllers\SearchController::class, 'posts'])->name('posts.search');
+Route::get('/search/nests', [App\Http\Controllers\SearchController::class, 'nests'])->name('nests.search');
+Route::get('/search/users', [App\Http\Controllers\SearchController::class, 'users'])->name('users.search');
+
+// Home feed API endpoints
+Route::get('/home-feed-posts', [App\Http\Controllers\HomeController::class, 'homeFeed'])->name('home.feed');
+// Recent posts for sidebar (joined nests for user, random nests for guest)
+Route::get('/sidebar-recent-posts', [App\Http\Controllers\HomeController::class, 'sidebarRecentPosts']);
+
 Route::group(['middleware' => 'auth'], function () {
     Route::get('/documentation', [HomeController::class, 'uisheet'])->name('uisheet');
 
@@ -45,8 +56,13 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('permission',PermissionController::class);
     Route::resource('role', RoleController::class);
 
-    // Users Module
-    Route::resource('users', UserController::class);
+// Users Module
+Route::resource('users', UserController::class);
+Route::middleware(['auth'])->group(function () {
+    Route::get('/profile/edit', [App\Http\Controllers\UserController::class, 'editProfile'])->name('profile.edit');
+    Route::post('/profile/update', [App\Http\Controllers\UserController::class, 'updateProfile'])->name('profile.update');
+});
+Route::get('/user-feed-posts', [App\Http\Controllers\UserController::class, 'userFeedPosts'])->name('user.feed.posts');
 });
 
 //App Details Page => 'Dashboard'], function() {
@@ -95,7 +111,7 @@ Route::group(['prefix' => 'auth'], function() {
 
 // Nests interactive routes: redirect guests to register
 Route::get('/nests/create', function() {
-    return auth()->check() ? app(App\Http\Controllers\NestController::class)->create() : redirect()->route('register');
+    return auth()->check() ? app(App\Http\Controllers\NestController::class)->create() : redirect()->route('login');
 })->name('nests.create');
 
 // Nests routes
@@ -107,6 +123,9 @@ Route::post('/nests/{nest}/create-posts', [App\Http\Controllers\NestController::
 
 Route::get('/nests/{name}/comments/{post_id}', [App\Http\Controllers\NestController::class, 'comments'])->name('nests.comments');
 
+// Join/Leave nest (with ownership transfer logic)
+Route::post('/nests/{nest}/join', [App\Http\Controllers\NestController::class, 'joinNest'])->middleware('auth')->name('nests.join');
+
 Route::post('/posts/{id}/vote', function($id) {
     return auth()->check() ? app(App\Http\Controllers\NestController::class)->vote(request(), $id) : redirect()->route('register');
 })->name('posts.vote');
@@ -117,6 +136,9 @@ Route::post('/posts/{post}/comment', [App\Http\Controllers\CommentController::cl
 Route::post('/nests-store', function() {
     return auth()->check() ? app(App\Http\Controllers\NestController::class)->store(request()) : redirect()->route('register');
 })->name('nests.store');
+
+// Moderate (delete) a post in a nest (owner/moderator only)
+Route::delete('/nests/{nest}/posts/{post}', [App\Http\Controllers\NestController::class, 'destroyPost'])->name('nests.posts.destroy')->middleware('auth');
 
 //Explicit update route for nests
 Route::put('nests/{nest}', [App\Http\Controllers\NestController::class, 'update'])->name('nests.update');
@@ -130,6 +152,9 @@ Route::post('/nests/{nest}/{user}/promote', [App\Http\Controllers\NestController
 // Kick member from nest
 Route::delete('/nests/{nest}/{user}/kick', [App\Http\Controllers\NestController::class, 'kick'])->name('nests.kick');
 Route::delete('/nests/{name}', [App\Http\Controllers\NestController::class, 'destroy'])->name('nests.destroy');
+
+// User profile feed API (guests can access)
+Route::get('/users/{id}/posts', [App\Http\Controllers\UserController::class, 'userPosts']);
 
 
 //Error Page Route
@@ -183,8 +208,6 @@ Route::middleware(['auth', 'admin'])->prefix('superadmin')->group(function() {
     Route::get('comments/{id}/edit', [SuperAdminComment::class, "edit"])->name('superadmin.comments.edit');
     Route::put('comments/{id}', [SuperAdminComment::class, "update"])->name('superadmin.comments.update');
     Route::delete('comments/{id}', [SuperAdminComment::class, "destroy"])->name('superadmin.comments.destroy');
-    
-    Route::view('logs', 'superadmin.logs')->name('superadmin.logs');
 });
 
 //Extra Page Routs

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Nest;
 
+
 class HomeController extends Controller
 {
     /*
@@ -15,6 +16,98 @@ class HomeController extends Controller
         $assets = ['chart', 'animation'];
         $nests = Nest::select('id', 'name', 'banner')->get();
         return view('home.home', compact('assets', 'nests'));
+    }
+
+    // API: Get home feed posts (random, prefer joined nests for logged in)
+    public function homeFeed(Request $request)
+    {
+        $user = auth()->user();
+        $limit = $request->input('limit', 10);
+        $postsQuery = \App\Models\Post::with(['user', 'nest', 'votes', 'comments']);
+        if ($user) {
+            $joinedNestIds = $user->nests()->pluck('nests.id')->toArray();
+            $postsQuery->whereIn('nest_id', $joinedNestIds)->inRandomOrder();
+            // If not enough, fill with random from other nests
+            $posts = $postsQuery->limit($limit)->get();
+            if ($posts->count() < $limit) {
+                $otherPosts = \App\Models\Post::with(['user', 'nest', 'votes', 'comments'])
+                    ->whereNotIn('nest_id', $joinedNestIds)
+                    ->inRandomOrder()
+                    ->limit($limit - $posts->count())
+                    ->get();
+                $posts = $posts->concat($otherPosts);
+            }
+        } else {
+            $posts = $postsQuery->inRandomOrder()->limit($limit)->get();
+        }
+        // Format for frontend
+        $result = $posts->map(function($post) use ($user) {
+            $currentUserVote = 0;
+            if ($user) {
+                $vote = $post->votes->where('user_id', $user->id)->first();
+                $currentUserVote = $vote ? (int)$vote->value : 0;
+            }
+            return [
+                'id' => $post->id,
+                'title' => $post->title,
+                'content' => $post->content,
+                'media' => $post->media,
+                'created_at' => $post->created_at,
+                'username' => $post->user ? $post->user->username : null,
+                'user_image' => $post->user && $post->user->avatar ? $post->user->avatar : null,
+                'nest_name' => $post->nest ? $post->nest->name : null,
+                'votes_count' => $post->votes->sum('value'),
+                'comments_count' => $post->comments->count(),
+                'current_user_vote' => $currentUserVote,
+            ];
+        });
+        return response()->json(['data' => $result]);
+    }
+
+
+        // API: Get recent posts for sidebar (joined nests for user, random for guest)
+    public function sidebarRecentPosts(Request $request)
+    {
+        $user = auth()->user();
+        $limit = $request->input('limit', 5);
+        $postsQuery = \App\Models\Post::with(['user', 'nest', 'votes', 'comments']);
+        if ($user) {
+            $joinedNestIds = $user->nests()->pluck('nests.id')->toArray();
+            $postsQuery->whereIn('nest_id', $joinedNestIds)->orderBy('created_at', 'desc');
+            $posts = $postsQuery->limit($limit)->get();
+            if ($posts->count() < $limit) {
+                $otherPosts = \App\Models\Post::with(['user', 'nest', 'votes', 'comments'])
+                    ->whereNotIn('nest_id', $joinedNestIds)
+                    ->orderBy('created_at', 'desc')
+                    ->limit($limit - $posts->count())
+                    ->get();
+                $posts = $posts->concat($otherPosts);
+            }
+        } else {
+            $posts = $postsQuery->inRandomOrder()->limit($limit)->get();
+        }
+        $result = $posts->map(function($post) use ($user) {
+            $currentUserVote = 0;
+            if ($user) {
+                $vote = $post->votes->where('user_id', $user->id)->first();
+                $currentUserVote = $vote ? (int)$vote->value : 0;
+            }
+            return [
+                'id' => $post->id,
+                'title' => $post->title,
+                'content' => $post->content,
+                'media' => $post->media,
+                'created_at' => $post->created_at,
+                'username' => $post->user ? $post->user->username : null,
+                'user_image' => $post->user && $post->user->avatar ? $post->user->avatar : null,
+                'nest_name' => $post->nest ? $post->nest->name : null,
+                'nest_image' => $post->nest && $post->nest->profile ? $post->nest->profile : null,
+                'votes_count' => $post->votes->sum('value'),
+                'comments_count' => $post->comments->count(),
+                'current_user_vote' => $currentUserVote,
+            ];
+        });
+        return response()->json(['data' => $result]);
     }
 
     /*

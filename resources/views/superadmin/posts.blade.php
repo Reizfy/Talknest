@@ -29,8 +29,8 @@
                                         <td>{{ $p->user->username }}</td>
                                         <td>{{ $p->created_at->format('Y-m-d') }}</td>
                                         <td style="display: flex; gap: 5px;">
-                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='{{ route('superadmin.comment.edit', ['id'=>$p->id]) }}'">Edit</button>
-                                            <form action="{{ route('superadmin.comment.destroy',['id'=>$p->id]) }}" method="POST">
+                                            <button class="btn btn-sm btn-primary" onclick="window.location.href='{{ route('superadmin.posts.edit', ['id'=>$p->id]) }}'">Edit</button>
+                                            <form action="{{ route('superadmin.posts.destroy',['id'=>$p->id]) }}" method="POST">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-sm btn-danger">Delete</button>
